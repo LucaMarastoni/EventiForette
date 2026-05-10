@@ -15,6 +15,7 @@ export default function ArcadePage() {
   const canvasRef = useRef(null);
   const frameRef = useRef(null);
   const stateRef = useRef(null);
+  const lastTimeRef = useRef(0);
   const [status, setStatus] = useState('ready');
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(() => Number(localStorage.getItem('eventi-forette-best') || 0));
@@ -107,7 +108,8 @@ export default function ArcadePage() {
         { x: 390, y: 110 }
       ],
       score: 0,
-      running: true
+      running: true,
+      paused: false
     };
     stateRef.current = initialState;
     setScore(0);
@@ -120,7 +122,7 @@ export default function ArcadePage() {
       startGame();
       return;
     }
-    if (stateRef.current?.running) {
+    if (stateRef.current?.running && !stateRef.current.paused) {
       stateRef.current.player.velocity = JUMP;
     }
   }, [startGame, status]);
@@ -138,20 +140,24 @@ export default function ArcadePage() {
           { x: 390, y: 110 }
         ],
         score: 0,
-        running: false
+        running: false,
+        paused: false
       };
     }
 
-    function loop() {
+    function loop(timestamp) {
       const state = stateRef.current;
-      if (state.running) {
-        state.player.velocity += GRAVITY;
-        state.player.y += state.player.velocity;
+      const delta = Math.min(1.8, Math.max(0.7, (timestamp - (lastTimeRef.current || timestamp)) / 16.67));
+      lastTimeRef.current = timestamp;
+
+      if (state.running && !state.paused) {
+        state.player.velocity += GRAVITY * delta;
+        state.player.y += state.player.velocity * delta;
         state.clouds.forEach((cloud) => {
-          cloud.x = cloud.x < -60 ? WIDTH + 40 : cloud.x - 0.35;
+          cloud.x = cloud.x < -60 ? WIDTH + 40 : cloud.x - 0.35 * delta;
         });
         state.pipes.forEach((pipe) => {
-          pipe.x -= 2.4;
+          pipe.x -= 2.4 * delta;
           if (!pipe.scored && pipe.x + PIPE_WIDTH < state.player.x) {
             pipe.scored = true;
             state.score += 1;
@@ -180,6 +186,7 @@ export default function ArcadePage() {
 
         if (hitGround || hitCeiling || hitPipe) {
           state.running = false;
+          if (navigator.vibrate) navigator.vibrate(45);
           setStatus('over');
           setBest((currentBest) => {
             const nextBest = Math.max(currentBest, state.score);
@@ -196,6 +203,37 @@ export default function ArcadePage() {
     frameRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frameRef.current);
   }, [draw]);
+
+  useEffect(() => {
+    function pauseGame() {
+      if (stateRef.current?.running) {
+        stateRef.current.paused = true;
+        setStatus('paused');
+      }
+    }
+
+    function resumeGame() {
+      if (stateRef.current?.running && stateRef.current.paused) {
+        stateRef.current.paused = false;
+        lastTimeRef.current = 0;
+        setStatus('playing');
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.hidden) pauseGame();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', pauseGame);
+    window.addEventListener('focus', resumeGame);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', pauseGame);
+      window.removeEventListener('focus', resumeGame);
+    };
+  }, []);
 
   useEffect(() => {
     function handleKey(event) {
@@ -240,15 +278,28 @@ export default function ArcadePage() {
           />
           {status !== 'playing' && (
             <div className="game-overlay">
-              <h3>{status === 'over' ? 'Game over' : 'Forette Fly'}</h3>
+              <h3>{status === 'over' ? 'Game over' : status === 'paused' ? 'Pausa' : 'Forette Fly'}</h3>
               <p>
                 {status === 'over'
                   ? `Hai totalizzato ${score} punti.`
-                  : 'Tocca, clicca o premi spazio per volare.'}
+                  : status === 'paused'
+                    ? 'Torna sulla pagina per continuare.'
+                    : 'Tocca, clicca o premi spazio per volare.'}
               </p>
-              <button className="primary-button" onClick={startGame}>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  if (status === 'paused' && stateRef.current) {
+                    stateRef.current.paused = false;
+                    lastTimeRef.current = 0;
+                    setStatus('playing');
+                    return;
+                  }
+                  startGame();
+                }}
+              >
                 <RotateCcw size={18} />
-                {status === 'over' ? 'Rigioca' : 'Inizia'}
+                {status === 'over' ? 'Rigioca' : status === 'paused' ? 'Riprendi' : 'Inizia'}
               </button>
             </div>
           )}

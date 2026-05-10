@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Gamepad2, Sparkles, Users } from 'lucide-react';
-import EventCard from '../components/EventCard.jsx';
+import { ArrowRight, CalendarDays, Gamepad2, MapPin, Sparkles, Users } from 'lucide-react';
 import SectionTitle from '../components/SectionTitle.jsx';
 import { api } from '../lib/api.js';
+import { dayNumber, monthShort } from '../lib/date.js';
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -20,11 +20,8 @@ export default function Home() {
             <Sparkles size={18} />
             Forette si incontra
           </div>
-          <h1>Eventi Forette</h1>
-          <p>
-            Il punto di riferimento per scoprire eventi, feste, attivita sociali e iniziative
-            locali a Forette, in provincia di Verona.
-          </p>
+          <h1>Vivi Forette. Partecipa. Divertiti.</h1>
+          <p>Scopri eventi, feste e attivita della comunita.</p>
           <div className="hero-actions">
             <Link className="primary-button" to="/calendario">
               <CalendarDays size={20} />
@@ -57,13 +54,42 @@ export default function Home() {
         </div>
       </section>
 
+      {events[0] && (
+        <Link className="home-flow-teaser" to="/calendario">
+          <span className="teaser-label">Prossimo evento</span>
+          <strong>{events[0].title}</strong>
+          <span>
+            {dayNumber(events[0].date)} {monthShort(events[0].date)} · {events[0].time}
+          </span>
+        </Link>
+      )}
+
       <section className="content-section">
         <SectionTitle kicker="In evidenza" title="Prossimi appuntamenti">
-          Un assaggio delle iniziative in programma, aggiornate direttamente dal calendario.
+          Tre occasioni per uscire, incontrarsi e vivere il paese.
         </SectionTitle>
-        <div className="event-grid">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} compact />
+        <div className="featured-event-list">
+          {events.map((event, index) => (
+            <Link key={event.id} className={`featured-event featured-tone-${index + 1}`} to="/calendario">
+              <span className="featured-date">
+                <strong>{dayNumber(event.date)}</strong>
+                {monthShort(event.date)}
+              </span>
+              <span className="featured-copy">
+                <strong>{event.title}</strong>
+                <small>
+                  <CalendarDays size={14} />
+                  {event.time}
+                </small>
+                <small>
+                  <MapPin size={14} />
+                  {event.location}
+                </small>
+              </span>
+              <span className="featured-arrow">
+                <ArrowRight size={17} />
+              </span>
+            </Link>
           ))}
         </div>
       </section>

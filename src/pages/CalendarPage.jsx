@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarCheck, Search } from 'lucide-react';
+import { CalendarCheck, Search, X } from 'lucide-react';
 import EventCard from '../components/EventCard.jsx';
 import SectionTitle from '../components/SectionTitle.jsx';
 import { api } from '../lib/api.js';
@@ -17,6 +17,7 @@ export default function CalendarPage() {
     }
   });
   const [error, setError] = useState('');
+  const [detailOpen, setDetailOpen] = useState(false);
 
   useEffect(() => {
     api.getEvents().then((data) => {
@@ -36,6 +37,11 @@ export default function CalendarPage() {
   }, [events, query]);
 
   const selectedEvent = events.find((event) => event.id === selectedId) || filteredEvents[0];
+
+  useEffect(() => {
+    document.body.classList.toggle('drawer-open', detailOpen);
+    return () => document.body.classList.remove('drawer-open');
+  }, [detailOpen]);
 
   async function handleAttend(event) {
     if (attended.includes(event.id)) return;
@@ -75,7 +81,10 @@ export default function CalendarPage() {
             <button
               key={event.id}
               className={`calendar-row ${selectedEvent?.id === event.id ? 'active' : ''}`}
-              onClick={() => setSelectedId(event.id)}
+              onClick={() => {
+                setSelectedId(event.id);
+                setDetailOpen(true);
+              }}
             >
               <span className="date-pill">
                 <strong>{dayNumber(event.date)}</strong>
@@ -87,6 +96,7 @@ export default function CalendarPage() {
                   {event.time} · {event.location}
                 </small>
               </span>
+              <span className="details-chip">Dettagli</span>
               <CalendarCheck size={20} />
             </button>
           ))}
@@ -102,6 +112,25 @@ export default function CalendarPage() {
             <div className="empty-state">Nessun evento trovato.</div>
           )}
         </div>
+      </section>
+
+      <div
+        className={`event-drawer-backdrop ${detailOpen ? 'open' : ''}`}
+        onClick={() => setDetailOpen(false)}
+        aria-hidden="true"
+      />
+      <section className={`event-drawer ${detailOpen ? 'open' : ''}`} aria-label="Dettaglio evento">
+        <div className="drawer-handle" />
+        <button className="drawer-close" type="button" onClick={() => setDetailOpen(false)} aria-label="Chiudi dettaglio">
+          <X size={22} />
+        </button>
+        {selectedEvent && (
+          <EventCard
+            event={selectedEvent}
+            onAttend={handleAttend}
+            disabledAttend={attended.includes(selectedEvent.id)}
+          />
+        )}
       </section>
     </div>
   );
