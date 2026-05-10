@@ -9,6 +9,7 @@
     "dev:server": "nodemon server/index.js",
     "dev:client": "vite --host 0.0.0.0",
     "build": "vite build",
+    "build:pages": "VITE_STATIC_MODE=true VITE_ROUTER_MODE=hash vite build --base ./",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {

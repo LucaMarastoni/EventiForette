@@ -27,6 +27,40 @@ npm start
 
 Il file `data.sqlite` viene creato automaticamente al primo avvio e contiene eventi demo iniziali.
 
+## Demo statica per GitHub Pages
+
+Per mostrare il sito ai clienti senza backend, usa la build statica:
+
+```bash
+npm run build:pages
+```
+
+Questa modalita:
+
+- non chiama Express o SQLite
+- usa dati demo iniziali nel browser
+- salva eventi, presenze e classifica in `localStorage`
+- usa routing hash, quindi funziona su GitHub Pages anche ricaricando le pagine
+
+Per provarla in locale:
+
+```bash
+npm run build:pages
+npm run preview
+```
+
+## Pubblicazione su GitHub Pages
+
+Il workflow `.github/workflows/pages.yml` pubblica automaticamente il sito quando fai push su `main`.
+
+Nel repository GitHub abilita:
+
+1. `Settings` → `Pages`
+2. `Build and deployment`
+3. `Source: GitHub Actions`
+
+Poi fai push del progetto su GitHub. La action compilera il frontend in modalita statica e pubblichera la cartella `dist`.
+
 ## Pagine
 
 - `/` landing page
