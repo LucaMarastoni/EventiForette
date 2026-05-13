@@ -517,6 +517,375 @@ button:disabled {
   background: rgba(255, 255, 255, 0.72);
 }
 
+.tournaments-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.tournaments-section {
+  margin-top: 0;
+}
+
+.tournament-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
+  gap: 20px;
+  margin-top: 24px;
+  align-items: stretch;
+}
+
+.tournament-list {
+  display: grid;
+  gap: 14px;
+}
+
+.tournament-card {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  min-height: 156px;
+  padding: 20px;
+  border: 1px solid rgba(37, 174, 234, 0.14);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 38px rgba(17, 125, 171, 0.08);
+  color: var(--ink);
+  text-align: left;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.tournament-card:hover,
+.tournament-card.active {
+  border-color: rgba(37, 174, 234, 0.42);
+  box-shadow: 0 20px 44px rgba(17, 125, 171, 0.14);
+  transform: translateY(-2px);
+}
+
+.tournament-card.active {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(238, 249, 255, 0.9)),
+    #ffffff;
+}
+
+.tournament-card::after {
+  content: "";
+  position: absolute;
+  right: -44px;
+  bottom: -52px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: rgba(255, 212, 71, 0.2);
+}
+
+.tournament-tone-2::after {
+  background: rgba(37, 174, 234, 0.14);
+}
+
+.tournament-tone-3::after {
+  background: rgba(255, 212, 71, 0.16);
+}
+
+.tournament-card-top,
+.tournament-card-meta,
+.bracket-board-header,
+.bracket-match span {
+  display: flex;
+  align-items: center;
+}
+
+.tournament-card-top {
+  position: relative;
+  z-index: 1;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tournament-card-top span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: var(--blue-dark);
+  background: #e8f8ff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tournament-card-top strong {
+  color: #7a5b00;
+  font-weight: 900;
+}
+
+.tournament-card h3 {
+  position: relative;
+  z-index: 1;
+  max-width: 11ch;
+  margin: 18px 0 16px;
+  font-size: 1.48rem;
+  line-height: 1.05;
+}
+
+.tournament-card-meta {
+  position: relative;
+  z-index: 1;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.tournament-card-meta span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(238, 249, 255, 0.82);
+}
+
+.tournament-open-icon {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--blue-dark);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.tournament-detail-stack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tournament-detail-card {
+  padding: 24px;
+  border: 1px solid rgba(37, 174, 234, 0.14);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 38px rgba(17, 125, 171, 0.08);
+}
+
+.tournament-detail-header span {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: #7a5b00;
+  background: #fff6c8;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tournament-detail-header h3 {
+  margin: 14px 0 8px;
+  font-size: 1.7rem;
+  line-height: 1.05;
+}
+
+.tournament-detail-header p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.tournament-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.tournament-detail-grid span,
+.tournament-format {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 12px 13px;
+  border-radius: 16px;
+  color: var(--muted);
+  background: #eef9ff;
+  font-weight: 750;
+}
+
+.tournament-detail-grid svg {
+  flex: 0 0 auto;
+  color: var(--blue-dark);
+}
+
+.tournament-format {
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 10px;
+  color: var(--ink);
+  background: #fff6c8;
+}
+
+.tournament-format span {
+  color: #7a5b00;
+  font-weight: 850;
+  text-align: right;
+}
+
+.bracket-board {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid rgba(37, 174, 234, 0.14);
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, rgba(232, 248, 255, 0.95), rgba(255, 246, 200, 0.72)),
+    #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.bracket-board-header {
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.bracket-board-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.tournament-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 0;
+  border-radius: 14px;
+  color: var(--blue-dark);
+  background: #ffffff;
+  font-weight: 850;
+  box-shadow: 0 10px 24px rgba(17, 125, 171, 0.1);
+}
+
+.bracket-board-header span {
+  color: var(--blue-dark);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.bracket-board-header h3 {
+  margin: 5px 0 0;
+  font-size: 1.55rem;
+}
+
+.bracket-board-header svg {
+  flex: 0 0 auto;
+  color: #b48a00;
+}
+
+.tournament-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(21, 50, 74, 0.34);
+  backdrop-filter: blur(7px);
+}
+
+.tournament-modal {
+  position: relative;
+  width: min(620px, 100%);
+}
+
+.tournament-modal .tournament-detail-card {
+  box-shadow: 0 28px 70px rgba(21, 50, 74, 0.24);
+}
+
+.tournament-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 24px rgba(17, 125, 171, 0.12);
+}
+
+.bracket-rounds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+  flex: 1;
+}
+
+.bracket-round {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bracket-round > strong {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.bracket-match {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(37, 174, 234, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.bracket-match span {
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.bracket-match b {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--blue-dark);
+  background: #e8f8ff;
+}
+
 .home-flow-teaser {
   display: none;
 }
@@ -1013,7 +1382,8 @@ label {
   .split-section,
   .calendar-layout,
   .admin-layout,
-  .arcade-layout {
+  .arcade-layout,
+  .tournament-showcase {
     grid-template-columns: 1fr;
   }
 
@@ -1023,8 +1393,14 @@ label {
   }
 
   .event-grid,
-  .featured-event-list {
+  .featured-event-list,
+  .bracket-rounds {
     grid-template-columns: 1fr;
+  }
+
+  .tournaments-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .hero-panel {
@@ -1221,6 +1597,164 @@ label {
   .featured-event-list {
     gap: 15px;
     margin-top: 24px;
+  }
+
+  .tournaments-heading {
+    gap: 18px;
+  }
+
+  .tournament-showcase {
+    gap: 16px;
+  }
+
+  .tournament-list {
+    display: flex;
+    gap: 10px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tournament-card {
+    flex: 0 0 min(78vw, 280px);
+    min-height: 112px;
+    padding: 14px;
+    border-radius: 20px;
+    box-shadow: 0 14px 34px rgba(17, 125, 171, 0.08);
+    scroll-snap-align: start;
+  }
+
+  .tournament-card:hover,
+  .tournament-card.active {
+    transform: none;
+  }
+
+  .tournament-card h3 {
+    max-width: 15ch;
+    margin: 12px 0 10px;
+    font-size: 1.06rem;
+    line-height: 1.12;
+  }
+
+  .tournament-card-top {
+    align-items: center;
+  }
+
+  .tournament-card-top span {
+    max-width: 150px;
+    padding: 6px 8px;
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .tournament-card-meta {
+    gap: 6px;
+    padding-right: 28px;
+    font-size: 0.78rem;
+  }
+
+  .tournament-card-meta span {
+    padding: 6px 8px;
+  }
+
+  .tournament-open-icon {
+    right: 10px;
+    bottom: 10px;
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+  }
+
+  .tournament-detail-card {
+    padding: 18px;
+    border-radius: 24px;
+    box-shadow: none;
+  }
+
+  .tournament-detail-header h3 {
+    font-size: 1.35rem;
+  }
+
+  .tournament-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tournament-format {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tournament-format span {
+    text-align: left;
+  }
+
+  .bracket-board {
+    padding: 18px;
+    border-radius: 24px;
+    box-shadow: none;
+  }
+
+  .bracket-board-header {
+    align-items: flex-start;
+  }
+
+  .bracket-board-header h3 {
+    font-size: 1.3rem;
+  }
+
+  .bracket-board-actions {
+    gap: 8px;
+  }
+
+  .bracket-board-actions > svg {
+    display: none;
+  }
+
+  .tournament-info-button {
+    min-height: 40px;
+    padding: 9px 11px;
+    border-radius: 13px;
+    font-size: 0.9rem;
+    box-shadow: none;
+  }
+
+  .tournament-modal-backdrop {
+    align-items: end;
+    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .tournament-modal {
+    width: 100%;
+  }
+
+  .tournament-modal .tournament-detail-card {
+    max-height: min(82dvh, 620px);
+    overflow-y: auto;
+    box-shadow: 0 -24px 70px rgba(21, 50, 74, 0.22);
+  }
+
+  .tournament-modal-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .tournament-modal .tournament-detail-header {
+    padding-right: 48px;
+  }
+
+  .bracket-rounds {
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .bracket-round {
+    gap: 9px;
+  }
+
+  .bracket-match span {
+    min-height: 42px;
+    overflow-wrap: anywhere;
   }
 
   .featured-event {

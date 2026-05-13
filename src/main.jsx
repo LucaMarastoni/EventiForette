@@ -4,6 +4,7 @@ import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom';
 import App from './App.jsx';
 import Home from './pages/Home.jsx';
 import CalendarPage from './pages/CalendarPage.jsx';
+import TournamentsPage from './pages/TournamentsPage.jsx';
 import ArcadePage from './pages/ArcadePage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import './styles.css';
@@ -17,6 +18,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
           <Route path="calendario" element={<CalendarPage />} />
+          <Route path="tornei" element={<TournamentsPage />} />
           <Route path="arcade" element={<ArcadePage />} />
           <Route path="admin" element={<AdminPage />} />
         </Route>

@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, Gamepad2, MapPin, Sparkles, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  CalendarDays,
+  Gamepad2,
+  MapPin,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import SectionTitle from '../components/SectionTitle.jsx';
 import { api } from '../lib/api.js';
 import { dayNumber, monthShort } from '../lib/date.js';

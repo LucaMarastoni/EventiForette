@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { CalendarDays, Gamepad2, Home, Shield } from 'lucide-react';
+import { CalendarDays, Gamepad2, Home, Shield, Trophy } from 'lucide-react';
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -51,6 +51,10 @@ export default function App() {
           <NavLink to="/calendario">
             <CalendarDays size={18} />
             Calendario
+          </NavLink>
+          <NavLink to="/tornei">
+            <Trophy size={18} />
+            Tornei
           </NavLink>
           <NavLink to="/arcade">
             <Gamepad2 size={18} />
