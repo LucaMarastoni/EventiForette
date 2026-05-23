@@ -32,6 +32,60 @@ export function initDb() {
       played_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       week_ref TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS arcade_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_name TEXT NOT NULL UNIQUE,
+      xp INTEGER NOT NULL DEFAULT 0,
+      arcade_credit INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS arcade_missions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      mission_key TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      current_progress INTEGER NOT NULL DEFAULT 0,
+      target INTEGER NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      reward_xp INTEGER NOT NULL DEFAULT 0,
+      reward_credit INTEGER NOT NULL DEFAULT 0,
+      week_ref TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      completed_at TEXT,
+      UNIQUE(user_id, mission_key, week_ref),
+      FOREIGN KEY(user_id) REFERENCES arcade_users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS arcade_coupons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      code TEXT NOT NULL UNIQUE,
+      discount_type TEXT NOT NULL,
+      discount_value INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'unused',
+      event_id INTEGER,
+      source TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      used_at TEXT,
+      FOREIGN KEY(user_id) REFERENCES arcade_users(id),
+      FOREIGN KEY(event_id) REFERENCES events(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS arcade_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      run_id TEXT NOT NULL UNIQUE,
+      score INTEGER NOT NULL,
+      duration_ms INTEGER NOT NULL,
+      submitted_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      week_ref TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES arcade_users(id)
+    );
   `);
 
   const eventCount = db.prepare('SELECT COUNT(*) AS count FROM events').get().count;
