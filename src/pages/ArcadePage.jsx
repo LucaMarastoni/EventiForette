@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { BadgePercent, ChevronDown, Gift, Medal, RotateCcw, Sparkles, Target, Trophy, Zap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import CouponQr from '../components/CouponQr.jsx';
 import SectionTitle from '../components/SectionTitle.jsx';
-import { api } from '../lib/api.js';
+import { api, getCurrentUser } from '../lib/api.js';
 
 const WIDTH = 420;
 const HEIGHT = 560;
@@ -37,12 +39,14 @@ export default function ArcadePage() {
   const [status, setStatus] = useState('ready');
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(() => Number(localStorage.getItem('eventi-forette-best') || 0));
-  const [playerName, setPlayerName] = useState(() => localStorage.getItem('eventi-forette-player-name') || '');
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const [playerName, setPlayerName] = useState(() => getCurrentUser()?.displayName || localStorage.getItem('eventi-forette-player-name') || '');
   const [leaderboard, setLeaderboard] = useState({ weekRef: '', scores: [] });
   const [profile, setProfile] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [savingScore, setSavingScore] = useState(false);
+  const [autoSaveAttempted, setAutoSaveAttempted] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [rewardMessage, setRewardMessage] = useState('');
   const [leaderboardExpanded, setLeaderboardExpanded] = useState(false);
 
   const loadLeaderboard = useCallback(() => {
@@ -52,6 +56,16 @@ export default function ArcadePage() {
   useEffect(() => {
     loadLeaderboard();
   }, [loadLeaderboard]);
+
+  useEffect(() => {
+    function handleUserChange(event) {
+      const nextUser = event.detail || getCurrentUser();
+      setCurrentUser(nextUser);
+      if (nextUser?.displayName) setPlayerName(nextUser.displayName);
+    }
+    window.addEventListener('eventi-forette-user', handleUserChange);
+    return () => window.removeEventListener('eventi-forette-user', handleUserChange);
+  }, []);
 
   const loadProfile = useCallback((name = playerName) => {
     if (!name.trim()) {
@@ -63,7 +77,7 @@ export default function ArcadePage() {
 
   useEffect(() => {
     if (playerName.trim()) loadProfile(playerName);
-  }, []);
+  }, [currentUser]);
 
   const draw = useCallback((ctx, state) => {
     const safeState = normalizeGameState(state);
@@ -230,8 +244,9 @@ export default function ArcadePage() {
     stateRef.current = initialState;
     setScore(0);
     setSaved(false);
+    setSavingScore(false);
+    setAutoSaveAttempted(false);
     setSaveError('');
-    setRewardMessage('');
     setStatus('playing');
   }, [profile]);
 
@@ -396,11 +411,12 @@ export default function ArcadePage() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [flap]);
 
-  async function saveScore(event) {
-    event.preventDefault();
+  const saveScore = useCallback(async () => {
     if (!playerName.trim()) return;
     const activeState = stateRef.current;
     const durationMs = activeState?.startedAt ? Date.now() - activeState.startedAt : 0;
+    setAutoSaveAttempted(true);
+    setSavingScore(true);
 
     try {
       const result = await api.saveScore({
@@ -414,19 +430,20 @@ export default function ArcadePage() {
       setSaveError('');
       if (result.profile) {
         setProfile(result.profile);
-        const completed = result.profile.completedMissions?.map((mission) => mission.title).join(', ');
-        const coupons = result.profile.generatedCoupons?.map((coupon) => coupon.code).join(', ');
-        setRewardMessage(
-          [completed ? `Missione completata: ${completed}.` : '', coupons ? `Coupon generato: ${coupons}.` : '']
-            .filter(Boolean)
-            .join(' ')
-        );
       }
       loadLeaderboard();
     } catch (error) {
       setSaveError(error.message);
+    } finally {
+      setSavingScore(false);
     }
-  }
+  }, [loadLeaderboard, playerName, score]);
+
+  useEffect(() => {
+    if (status === 'over' && currentUser && !saved && !savingScore && !autoSaveAttempted && stateRef.current?.runId) {
+      saveScore();
+    }
+  }, [autoSaveAttempted, currentUser, saveScore, saved, savingScore, status]);
 
   const currentDifficulty = getDifficultyLevel({
     score,
@@ -496,26 +513,19 @@ export default function ArcadePage() {
               best={best}
               profile={profile}
               saved={saved}
-              rewardMessage={rewardMessage}
+              savingScore={savingScore}
+              currentUser={currentUser}
               onReplay={startGame}
             />
           )}
-          {status === 'over' && !saved && (
-            <form onSubmit={saveScore} className="score-form">
-              <input
-                value={playerName}
-                onChange={(event) => setPlayerName(event.target.value)}
-                onBlur={() => loadProfile(playerName)}
-                maxLength="40"
-                placeholder="Nome giocatore"
-              />
-              <button className="primary-button" type="submit">
-                Salva
-              </button>
-            </form>
+          {!currentUser && status === 'over' && (
+            <div className="score-form account-save-prompt">
+              <span>Vuoi salvare punteggio, XP e coupon?</span>
+              <Link className="primary-button" to="/account">
+                Crea account
+              </Link>
+            </div>
           )}
-          {saved && <p className="alert success">Punteggio salvato.</p>}
-          {rewardMessage && <p className="alert success reward-flash">{rewardMessage}</p>}
           {saveError && <p className="alert">{saveError}</p>}
           <LeaderboardPanel
             leaderboard={leaderboard}
@@ -532,7 +542,7 @@ export default function ArcadePage() {
   );
 }
 
-function PostGameSummary({ score, best, profile, saved, rewardMessage, onReplay }) {
+function PostGameSummary({ score, best, profile, saved, savingScore, currentUser, onReplay }) {
   const level = profile?.user?.level?.name || 'Bronzo';
   const credit = profile?.user?.arcadeCredit || 0;
 
@@ -551,7 +561,15 @@ function PostGameSummary({ score, best, profile, saved, rewardMessage, onReplay 
         <span>{level}</span>
         <span>{credit} crediti</span>
       </div>
-      <p>{saved ? rewardMessage || 'Progressi aggiornati.' : 'Salva la run per sbloccare XP, crediti e coupon.'}</p>
+      <p>
+        {saved
+          ? 'Progressi aggiornati.'
+          : savingScore
+            ? 'Salvataggio progressi in corso.'
+            : currentUser
+              ? 'Il risultato viene salvato automaticamente.'
+              : 'Crea un account per salvare XP, crediti e coupon.'}
+      </p>
       <button className="primary-button replay-button" type="button" onClick={onReplay}>
         <RotateCcw size={18} />
         Rigioca
@@ -699,9 +717,7 @@ function CouponList({ coupons, emptyText }) {
     <div className="coupon-list">
       {coupons.map((coupon) => (
         <div key={coupon.id} className={`coupon-item ${coupon.status}`}>
-          <span className="coupon-ticket-icon">
-            <Gift size={18} />
-          </span>
+          <CouponQr coupon={coupon} />
           <div>
             <strong>{coupon.code}</strong>
             <span>
@@ -709,6 +725,9 @@ function CouponList({ coupons, emptyText }) {
               {coupon.event_title ? ` · ${coupon.event_title}` : ''}
             </span>
           </div>
+          <span className="coupon-ticket-icon">
+            <Gift size={18} />
+          </span>
           <small>{coupon.status === 'unused' ? couponCountdown(coupon.expires_at) : coupon.status}</small>
         </div>
       ))}

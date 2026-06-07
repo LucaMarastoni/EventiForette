@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { CalendarDays, Gamepad2, Home, Shield, Trophy } from 'lucide-react';
+import { CalendarDays, Gamepad2, Home, Shield, Trophy, UserCircle } from 'lucide-react';
+import { getCurrentUser, isAdminUser } from './lib/api.js';
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(() => getCurrentUser());
   const location = useLocation();
 
   useEffect(() => {
@@ -14,6 +16,18 @@ export default function App() {
     document.body.classList.toggle('nav-open', menuOpen);
     return () => document.body.classList.remove('nav-open');
   }, [menuOpen]);
+
+  useEffect(() => {
+    function handleUserChange(event) {
+      setUser(event.detail || getCurrentUser());
+    }
+    window.addEventListener('eventi-forette-user', handleUserChange);
+    window.addEventListener('storage', handleUserChange);
+    return () => {
+      window.removeEventListener('eventi-forette-user', handleUserChange);
+      window.removeEventListener('storage', handleUserChange);
+    };
+  }, []);
 
   return (
     <div className="app-shell">
@@ -60,10 +74,16 @@ export default function App() {
             <Gamepad2 size={18} />
             Arcade
           </NavLink>
-          <NavLink to="/admin">
-            <Shield size={18} />
-            Admin
+          <NavLink to="/account">
+            <UserCircle size={18} />
+            {user ? user.displayName : 'Accedi'}
           </NavLink>
+          {isAdminUser(user) && (
+            <NavLink to="/admin">
+              <Shield size={18} />
+              Admin
+            </NavLink>
+          )}
         </nav>
       </header>
       <main>

@@ -10,7 +10,9 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import SectionTitle from '../components/SectionTitle.jsx';
+import { api, getCurrentUser } from '../lib/api.js';
 
 const tournaments = [
   {
@@ -109,15 +111,62 @@ const tournaments = [
 ];
 
 export default function TournamentsPage() {
+  const [tournamentList, setTournamentList] = useState(tournaments);
   const [selectedId, setSelectedId] = useState(tournaments[0].id);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [user, setUser] = useState(() => getCurrentUser());
+  const [registrations, setRegistrations] = useState([]);
+  const [teamName, setTeamName] = useState(() => getCurrentUser()?.displayName || '');
+  const [notes, setNotes] = useState('');
+  const [message, setMessage] = useState('');
   const selectedTournament =
-    tournaments.find((tournament) => tournament.id === selectedId) || tournaments[0];
+    tournamentList.find((tournament) => tournament.id === selectedId) || tournamentList[0];
+
+  useEffect(() => {
+    api.getTournaments().then((data) => {
+      if (!data.length) return;
+      setTournamentList(data);
+      setSelectedId((current) => data.some((tournament) => tournament.id === current) ? current : data[0].id);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function refreshUser(event) {
+      const nextUser = event.detail || getCurrentUser();
+      setUser(nextUser);
+      setTeamName((current) => current || nextUser?.displayName || '');
+    }
+    window.addEventListener('eventi-forette-user', refreshUser);
+    return () => window.removeEventListener('eventi-forette-user', refreshUser);
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setRegistrations([]);
+      return;
+    }
+    api.getTournamentRegistrations(user.id).then(setRegistrations).catch(() => setRegistrations([]));
+  }, [user]);
 
   useEffect(() => {
     document.body.classList.toggle('drawer-open', infoOpen);
     return () => document.body.classList.remove('drawer-open');
   }, [infoOpen]);
+
+  async function handleRegister(event) {
+    event.preventDefault();
+    setMessage('');
+    try {
+      await api.registerTournament(selectedTournament.id, { teamName, notes });
+      setMessage('Iscrizione salvata.');
+      setNotes('');
+      setRegistrations(await api.getTournamentRegistrations(user.id));
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  const isRegistered = registrations.some((registration) => registration.tournament_id === selectedTournament?.id);
 
   return (
     <div className="page">
@@ -130,7 +179,7 @@ export default function TournamentsPage() {
 
         <div className="tournament-showcase">
           <div className="tournament-list">
-            {tournaments.map((tournament) => (
+            {tournamentList.map((tournament) => (
               <button
                 key={tournament.id}
                 className={`tournament-card ${tournament.accent} ${
@@ -148,7 +197,7 @@ export default function TournamentsPage() {
                     <Trophy size={16} />
                     {tournament.status}
                   </span>
-                  <strong>{tournament.date}</strong>
+                  <strong>{tournament.date_label || tournament.date}</strong>
                 </div>
                 <h3>{tournament.name}</h3>
                 <div className="tournament-card-meta">
@@ -176,7 +225,7 @@ export default function TournamentsPage() {
                 </div>
               </div>
               <div className="bracket-rounds">
-                {selectedTournament.bracket.map((round) => (
+                {(selectedTournament.bracket || []).map((round) => (
                   <div key={round.title} className="bracket-round">
                     <strong>{round.title}</strong>
                     {round.matches.map((match) => (
@@ -225,7 +274,7 @@ export default function TournamentsPage() {
               <div className="tournament-detail-grid">
                 <span>
                   <CalendarDays size={17} />
-                  {selectedTournament.date}
+                  {selectedTournament.date_label || selectedTournament.date}
                 </span>
                 <span>
                   <Clock size={17} />
@@ -243,6 +292,31 @@ export default function TournamentsPage() {
               <div className="tournament-format">
                 <strong>Formula</strong>
                 <span>{selectedTournament.format}</span>
+              </div>
+              <div className="tournament-signup">
+                <strong>Iscrizione</strong>
+                {!user ? (
+                  <Link className="primary-button" to="/account">
+                    Accedi per iscriverti
+                  </Link>
+                ) : isRegistered ? (
+                  <p className="alert success">Sei gia iscritto a questo torneo.</p>
+                ) : (
+                  <form className="stack-form" onSubmit={handleRegister}>
+                    <label>
+                      Nome squadra o coppia
+                      <input value={teamName} onChange={(event) => setTeamName(event.target.value)} required />
+                    </label>
+                    <label>
+                      Note opzionali
+                      <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows="3" />
+                    </label>
+                    {message && <p className={`alert ${message.includes('salvata') ? 'success' : ''}`}>{message}</p>}
+                    <button className="primary-button" type="submit">
+                      Iscriviti
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>

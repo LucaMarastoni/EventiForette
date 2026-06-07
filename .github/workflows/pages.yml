@@ -31,7 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build static demo
+      - name: Build GitHub Pages
+        env:
+          VITE_SUPABASE_REST_URL: https://qroxxpqwuboaurdgwhnf.supabase.co/rest/v1
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build:pages
 
       - name: Upload artifact

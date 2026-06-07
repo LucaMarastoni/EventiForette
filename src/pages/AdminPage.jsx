@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Edit3, Plus, Save, Trash2, Users } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { BadgeCheck, Camera, Edit3, Plus, Save, ScanLine, Trash2, Users, XCircle } from 'lucide-react';
 import SectionTitle from '../components/SectionTitle.jsx';
-import { api } from '../lib/api.js';
+import { api, getCurrentUser, isAdminUser } from '../lib/api.js';
 import { formatDate } from '../lib/date.js';
 
 const emptyEvent = {
@@ -16,33 +16,46 @@ const emptyEvent = {
 };
 
 export default function AdminPage() {
-  const [token, setToken] = useState(() => localStorage.getItem('eventi-forette-admin-token'));
-  const [credentials, setCredentials] = useState({ username: 'admin', password: 'admin' });
+  const currentUser = getCurrentUser();
   const [events, setEvents] = useState([]);
   const [form, setForm] = useState(emptyEvent);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [couponResult, setCouponResult] = useState(null);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const videoRef = useRef(null);
+  const scannerTimerRef = useRef(null);
+  const streamRef = useRef(null);
   const isEditing = useMemo(() => editingId !== null, [editingId]);
 
   useEffect(() => {
-    if (token) loadEvents();
-  }, [token]);
+    if (isAdminUser(currentUser)) loadEvents();
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => () => stopScanner(), []);
+
+  useEffect(() => {
+    if (scannerOpen) startScanner();
+    return () => stopScanner();
+  }, [scannerOpen]);
+
+  if (!isAdminUser(currentUser)) {
+    return (
+      <div className="page narrow-page">
+        <section className="auth-card">
+          <SectionTitle kicker="Admin" title="Accesso riservato">
+            Questa area e visibile solo ai profili amministratore.
+          </SectionTitle>
+        </section>
+      </div>
+    );
+  }
 
   async function loadEvents() {
     const data = await api.getEvents();
     setEvents(data);
-  }
-
-  async function handleLogin(event) {
-    event.preventDefault();
-    setMessage('');
-    try {
-      const result = await api.loginAdmin(credentials);
-      localStorage.setItem('eventi-forette-admin-token', result.token);
-      setToken(result.token);
-    } catch (err) {
-      setMessage(err.message);
-    }
   }
 
   function updateField(field, value) {
@@ -93,37 +106,61 @@ export default function AdminPage() {
     await loadEvents();
   }
 
-  if (!token) {
-    return (
-      <div className="page narrow-page">
-        <section className="auth-card">
-          <SectionTitle kicker="Admin" title="Accesso gestione eventi">
-            Login provvisorio per gestire il calendario. Credenziali: admin / admin.
-          </SectionTitle>
-          <form onSubmit={handleLogin} className="stack-form">
-            <label>
-              Username
-              <input
-                value={credentials.username}
-                onChange={(event) => updateCredentials(setCredentials, 'username', event.target.value)}
-              />
-            </label>
-            <label>
-              Password
-              <input
-                type="password"
-                value={credentials.password}
-                onChange={(event) => updateCredentials(setCredentials, 'password', event.target.value)}
-              />
-            </label>
-            {message && <p className="alert">{message}</p>}
-            <button className="primary-button" type="submit">
-              Accedi
-            </button>
-          </form>
-        </section>
-      </div>
-    );
+  async function handleValidateCoupon(value = couponInput) {
+    setCouponMessage('');
+    setCouponResult(null);
+    try {
+      const result = await api.validateCoupon(value);
+      setCouponResult(result);
+      setCouponMessage(result.message);
+      if (result.coupon?.code) setCouponInput(result.coupon.code);
+    } catch (err) {
+      setCouponMessage(err.message);
+    }
+  }
+
+  async function startScanner() {
+    if (!('BarcodeDetector' in window)) {
+      setCouponMessage('Scanner QR non supportato da questo browser. Inserisci il codice manualmente.');
+      setScannerOpen(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
+      });
+      streamRef.current = stream;
+      if (!videoRef.current) return;
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+      const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+      scannerTimerRef.current = window.setInterval(async () => {
+        if (!videoRef.current) return;
+        const codes = await detector.detect(videoRef.current).catch(() => []);
+        const rawValue = codes[0]?.rawValue;
+        if (!rawValue) return;
+        stopScanner();
+        setScannerOpen(false);
+        setCouponInput(rawValue);
+        handleValidateCoupon(rawValue);
+      }, 450);
+    } catch {
+      setCouponMessage('Impossibile accedere alla fotocamera. Controlla i permessi o inserisci il codice manualmente.');
+      setScannerOpen(false);
+    }
+  }
+
+  function stopScanner() {
+    if (scannerTimerRef.current) {
+      window.clearInterval(scannerTimerRef.current);
+      scannerTimerRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
   }
 
   return (
@@ -132,18 +169,56 @@ export default function AdminPage() {
         <SectionTitle kicker="Admin" title="Gestione eventi">
           Crea, modifica o elimina gli appuntamenti pubblicati nel calendario.
         </SectionTitle>
-        <button
-          className="secondary-button"
-          onClick={() => {
-            localStorage.removeItem('eventi-forette-admin-token');
-            setToken(null);
-          }}
-        >
-          Esci
-        </button>
       </section>
 
       {message && <p className="alert success">{message}</p>}
+
+      <section className="admin-coupon-validator">
+        <div className="leaderboard-title">
+          <ScanLine size={24} />
+          <div>
+            <h3>Convalida coupon</h3>
+            <span>Scansiona il QR o inserisci il codice coupon.</span>
+          </div>
+        </div>
+        <form
+          className="coupon-validator-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleValidateCoupon();
+          }}
+        >
+          <input
+            value={couponInput}
+            onChange={(event) => setCouponInput(event.target.value)}
+            placeholder="FORETTE-..."
+          />
+          <button className="primary-button" type="submit">
+            <BadgeCheck size={18} />
+            Convalida
+          </button>
+          <button className="secondary-button" type="button" onClick={() => setScannerOpen((open) => !open)}>
+            {scannerOpen ? <XCircle size={18} /> : <Camera size={18} />}
+            {scannerOpen ? 'Chiudi scanner' : 'Scansiona QR'}
+          </button>
+        </form>
+        {scannerOpen && (
+          <div className="coupon-scanner">
+            <video ref={videoRef} muted playsInline />
+          </div>
+        )}
+        {couponMessage && (
+          <p className={`alert ${couponResult?.valid ? 'success' : ''}`}>
+            {couponMessage}
+          </p>
+        )}
+        {couponResult?.coupon && (
+          <div className={`coupon-validation-result ${couponResult.valid ? 'valid' : 'invalid'}`}>
+            <strong>{couponResult.coupon.code}</strong>
+            <span>{couponResult.coupon.discount_value}% sconto · {couponResult.coupon.status}</span>
+          </div>
+        )}
+      </section>
 
       <section className="admin-layout">
         <form className="admin-form" onSubmit={handleSubmit}>
@@ -250,8 +325,4 @@ export default function AdminPage() {
       </section>
     </div>
   );
-}
-
-function updateCredentials(setter, field, value) {
-  setter((current) => ({ ...current, [field]: value }));
 }

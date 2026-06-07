@@ -7,6 +7,7 @@ import CalendarPage from './pages/CalendarPage.jsx';
 import TournamentsPage from './pages/TournamentsPage.jsx';
 import ArcadePage from './pages/ArcadePage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
+import AccountPage from './pages/AccountPage.jsx';
 import './styles.css';
 
 const Router = import.meta.env.VITE_ROUTER_MODE === 'hash' ? HashRouter : BrowserRouter;
@@ -20,6 +21,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="calendario" element={<CalendarPage />} />
           <Route path="tornei" element={<TournamentsPage />} />
           <Route path="arcade" element={<ArcadePage />} />
+          <Route path="account" element={<AccountPage />} />
           <Route path="admin" element={<AdminPage />} />
         </Route>
       </Routes>
